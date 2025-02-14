@@ -65,10 +65,10 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
 
     """
     # TODO: Implement for Task 2.1.
-    strides = strides_from_shape(shape)
-    for i in range(len(shape)):
-        out_index[i] = ordinal // strides[i]
-        ordinal = ordinal % strides[i]
+    ordinal = int(ordinal) #确保为int类型
+    for d in range(len(shape) - 1, -1, -1):
+        out_index[d] = ordinal % shape[d]
+        ordinal = ordinal // shape[d]
     return None
     # raise NotImplementedError("Need to implement for Task 2.1")
 
@@ -99,8 +99,6 @@ def broadcast_index(
             out_index[i] = 0
         elif big_shape[start + i] == shape[i]:
             out_index[i] = big_index[start+i]
-        else:
-            raise IndexingError(f"Cannot broadcast {big_shape} and {shape}.")
     return None
     raise NotImplementedError("Need to implement for Task 2.2")
 
