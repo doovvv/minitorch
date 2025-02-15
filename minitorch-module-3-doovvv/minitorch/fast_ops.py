@@ -369,16 +369,17 @@ def _tensor_matrix_multiply(
         to_index(i, out_shape, out_index)
         #对于连续张量，i等于out_idx
         out_idx = index_to_position(out_index, out_strides)
-        for j in range(a_shape[-2]):
+        for j in range(a_shape[-1]):
             a_index = np.zeros(len(a_shape), dtype=np.int32)
             b_index = np.zeros(len(b_shape), dtype=np.int32)
             broadcast_index(out_index, out_shape, a_shape, a_index)
             broadcast_index(out_index, out_shape, b_shape, b_index)
-            a_index[-2] = j
+            a_index[-1] = j
             a_idx = index_to_position(a_index, a_strides)
             b_index[-2] = j
             b_idx = index_to_position(b_index, b_strides)
-            out[out_idx] += a_storage[a_idx] * b_storage[b_idx]  
+            # 前一个矩阵的行×后一个矩阵的列
+            out[out_idx] += a_storage[a_idx] * b_storage[b_idx]    
     # raise NotImplementedError("Need to implement for Task 3.2")
 
 
