@@ -265,7 +265,7 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     cache[pos] = a[i]
     # print(cuda.blockIdx.x)
     out[cuda.blockIdx.x] = sum(cache,0)
-    raise NotImplementedError("Need to implement for Task 3.3")
+    # raise NotImplementedError("Need to implement for Task 3.3")
 
 
 jit_sum_practice = cuda.jit()(_sum_practice)
@@ -353,24 +353,29 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
 
     """
-        BLOCK_DIM = 1024
-        # cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-        out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        a_index = cuda.local.array(MAX_DIMS,numba.int32)
-        out_pos = cuda.blockIdx.x
-        pos = cuda.threadIdx.x
-        i = out_pos*cuda.blockDim.x+pos
-        # 注意线程数量可能超过数据大小
-        if out_size > i :
-            to_index(i,out_shape,out_index)
-            out[i] = reduce_value
-            # 复制out_index给a_index
-            to_index(i,out_shape,a_index) 
-            for j in range(a_shape[reduce_dim]):
-                a_index[reduce_dim] = j
-                a_pos = index_to_position(a_index,a_strides)
-                out[i] = fn(out[i],a_storage[a_pos])
-        # TODO: Implement for Task 3.3.
+    BLOCK_DIM = 32
+    cache_a = cuda.shared.array((BLOCK_DIM,BLOCK_DIM), numba.float64)
+    cache_b = cuda.shared.array((BLOCK_DIM,BLOCK_DIM), numba.float64)
+    # TODO: Implement for Task 3.3.
+    #这里的posx_x其实就是cuda.threadIdx.x，pos_y同理
+    pos_x = cuda.blockIdx.x*cuda.blockDim.x+cuda.threadIdx.x
+    pos_y = cuda.blockIdx.y*cuda.blockDim.y+cuda.threadIdx.y
+    pos = pos_x*size+pos_y
+        # print(pos_x,cuda.threadIdx.x)
+        # 所有数据首先放入cache中
+    if pos <size*size:
+        cache_a[cuda.threadIdx.x][cuda.threadIdx.y] = a[pos]
+        cache_b[cuda.threadIdx.x][cuda.threadIdx.y] = b[pos]
+    cuda.syncthreads()
+    if pos < len(out):
+        i = pos // size
+        j = pos % size
+        ret = numba.float64(0.0)
+        for k in range(size):
+            ret += (cache_a[i][k]*cache_b[k][j])
+            # print(size,BLOCK_DIM,cache_a[x][i],a[x*size+i])
+        # 只写入一次global memory
+        out[pos] = ret
     # raise NotImplementedError("Need to implement for Task 3.3")
 
 
@@ -440,7 +445,32 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
-    raise NotImplementedError("Need to implement for Task 3.4")
+    ret = 0.0
+    for t in range((out_shape[-1] + (THREADS_PER_BLOCK - 1)) // THREADS_PER_BLOCK):
+        tx = pi + t*BLOCK_DIM
+        ty = pj + t*BLOCK_DIM
+        if tx < a_shape[-1] and y < a_shape[-2]:
+            a_shared[pj][pi] = a_storage[a_batch_stride*batch+y*a_strides[-2]+tx*a_strides[-1]]
+        else:
+            a_shared[pj][pi] = 0 
+
+        if ty < b_shape[-2] and x < b_shape[-1]:
+            b_shared[pj][pi] = b_storage[b_batch_stride*batch+ty*b_strides[-2]+x*b_strides[-1]]
+        else:
+            b_shared[pj][pi] = 0
+        
+        numba.cuda.syncthreads()
+
+        for l in range(BLOCK_DIM):
+            ret += a_shared[pj][l]*b_shared[l][pi]
+
+        numba.cuda.syncthreads()
+    
+    if x < out_shape[-1] and y < out_shape[-2]:
+        out[batch*out_strides[0]+y*out_strides[-2]+x*out_strides[-1]] = ret
+
+
+    # raise NotImplementedError("Need to implement for Task 3.4")
 
 
 tensor_matrix_multiply = jit(_tensor_matrix_multiply)
