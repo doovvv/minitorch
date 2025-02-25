@@ -6,7 +6,7 @@ from .fast_ops import FastOps
 from .tensor import Tensor
 from .tensor_functions import Function, rand, tensor
 
-
+# from tensor_functions import Function
 # List of functions in this file:
 # - avgpool2d: Tiled average pooling 2D
 # - argmax: Compute the argmax as a 1-hot tensor
@@ -53,3 +53,37 @@ def avgpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
     ret = input.view(input.shape[0],input.shape[1],input.shape[2],input.shape[3])
     return ret
 # TODO: Implement for Task 4.3.
+def argmax(input: Tensor,dim :int):
+    out = FastOps.reduce(operators.max,-1e9)(input,dim)
+    return out == input
+class Max(Function):
+    @staticmethod
+    def forward(ctx: Context,input: Tensor,dim:Tensor)-> Tensor:
+        ctx.save_for_backward(input,dim)
+        # 对于max函数来说，start必须设置为很小
+        return FastOps.reduce(operators.max,-1e9)(input,int(dim.item()))
+    @staticmethod
+    def backward(ctx: Context,grad_output: Tensor) -> Tensor:
+        input,dim = ctx.saved_values
+        out = grad_output*argmax(input,int(dim.item()))
+        
+        return out,0.0
+def max(input:Tensor,dim:int)-> Tensor:
+    return Max.apply(input,input._ensure_tensor(dim))
+def softmax(input:Tensor,dim:int)->Tensor:
+    input = input.exp()
+    sum_along_dim = input.sum(dim)
+    return input/sum_along_dim
+def logsoftmax(input:Tensor,dim:int)->Tensor:
+    return softmax(input,dim).log()
+def maxpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
+    input,_,_ = tile(input,kernel)
+    input = max(input,len(input.shape)-1)
+    ret = input.view(input.shape[0],input.shape[1],input.shape[2],input.shape[3])
+    return ret
+def dropout(input:Tensor,rate:float,ignore:bool = False):
+    if not ignore:
+        bit_tensor = rand(input.shape,input.backend) > rate
+        return bit_tensor*input
+    else:
+        return input

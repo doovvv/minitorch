@@ -35,7 +35,8 @@ class Conv1d(minitorch.Module):
 
     def forward(self, input):
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        return minitorch.conv1d(input,self.weights.value)+self.bias.value
+        # raise NotImplementedError("Need to implement for Task 4.5")
 
 
 class CNNSentimentKim(minitorch.Module):
@@ -61,14 +62,32 @@ class CNNSentimentKim(minitorch.Module):
     ):
         super().__init__()
         self.feature_map_size = feature_map_size
+        self.embedding_size = embedding_size
+        self.dropout = dropout
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        self.conv1d_1 = Conv1d(embedding_size,feature_map_size,filter_sizes[0])
+        self.conv1d_2 = Conv1d(embedding_size,feature_map_size,filter_sizes[1])
+        self.conv1d_3 = Conv1d(embedding_size,feature_map_size,filter_sizes[2])
+        self.linear = Linear(feature_map_size,1)
+        # raise NotImplementedError("Need to implement for Task 4.5")
 
     def forward(self, embeddings):
         """
         embeddings tensor: [batch x sentence length x embedding dim]
         """
+        embeddings = embeddings.permute(0,2,1)
+
+        x1 = self.conv1d_1(embeddings).relu()
+        x2 = self.conv1d_2(embeddings).relu()
+        x3 = self.conv1d_3(embeddings).relu()
+        pooled_sum = minitorch.max(x1,2)+minitorch.max(x2,2)+minitorch.max(x3,2)
+        pooled_sum = pooled_sum.view(pooled_sum.shape[0],pooled_sum.shape[1])
+        out = self.linear(pooled_sum)
+        out = minitorch.dropout(out,rate=self.dropout,ignore=(not self.train))
+        #这里必须加view，否则计算loss的时候会广播，导致loss变大
+        return out.sigmoid().view(out.shape[0])
         # TODO: Implement for Task 4.5.
+        
         raise NotImplementedError("Need to implement for Task 4.5")
 
 
@@ -135,6 +154,7 @@ class SentenceSentimentTrain:
         losses = []
         train_accuracy = []
         validation_accuracy = []
+        print("start train")
         for epoch in range(1, max_epochs + 1):
             total_loss = 0.0
 
@@ -257,7 +277,6 @@ if __name__ == "__main__":
     validation_size = 100
     learning_rate = 0.01
     max_epochs = 250
-
     (X_train, y_train), (X_val, y_val) = encode_sentiment_data(
         load_dataset("glue", "sst2"),
         embeddings.GloveEmbedding("wikipedia_gigaword", d_emb=50, show_progress=True),

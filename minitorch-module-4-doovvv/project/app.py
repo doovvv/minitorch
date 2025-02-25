@@ -4,7 +4,7 @@ import streamlit as st
 from interface.streamlit_utils import get_img_tag
 from interface.train import render_train_interface
 from math_interface import render_math_sandbox
-from run_torch import TorchTrain
+# from run_torch import TorchTrain
 
 parser = ArgumentParser()
 parser.add_argument("module_num", type=int)
@@ -38,26 +38,26 @@ module_selection = st.sidebar.radio(
 
 PAGES = {}
 
-if module_selection == "Module 0":
-    from module_interface import render_module_sandbox
-    from run_manual import ManualTrain
+# if module_selection == "Module 0":
+#     from module_interface import render_module_sandbox
+#     from run_manual import ManualTrain
 
-    def render_run_manual_interface():
-        st.header("Module 0 - Manual")
-        render_train_interface(ManualTrain, False, False, True)
+#     def render_run_manual_interface():
+#         st.header("Module 0 - Manual")
+#         render_train_interface(ManualTrain, False, False, True)
 
-    def render_m0_sandbox():
-        return render_math_sandbox(False)
+#     def render_m0_sandbox():
+#         return render_math_sandbox(False)
 
-    PAGES["Math Sandbox"] = render_m0_sandbox
-    PAGES["Module Sandbox"] = render_module_sandbox
+#     PAGES["Math Sandbox"] = render_m0_sandbox
+#     PAGES["Module Sandbox"] = render_module_sandbox
 
-    def render_run_torch_interface():
-        st.header("Demo - Torch")
-        render_train_interface(TorchTrain, False)
+#     def render_run_torch_interface():
+#         st.header("Demo - Torch")
+#         render_train_interface(TorchTrain, False)
 
-    PAGES["Torch Example"] = render_run_torch_interface
-    PAGES["Module 0: Manual"] = render_run_manual_interface
+#     PAGES["Torch Example"] = render_run_torch_interface
+#     PAGES["Module 0: Manual"] = render_run_manual_interface
 
 if module_selection == "Module 1":
     from run_scalar import ScalarTrain
@@ -102,10 +102,10 @@ if module_selection == "Module 3":
     PAGES["Module 3: Efficient"] = render_run_fast_interface
 
 if module_selection == "Module 4":
-    from run_mnist_interface import render_run_image_interface
+    # from run_mnist_interface import render_run_image_interface
     from sentiment_interface import render_run_sentiment_interface
 
-    PAGES["Module 4: Images"] = render_run_image_interface
+    # PAGES["Module 4: Images"] = render_run_image_interface
     PAGES["Module 4: Sentiment"] = render_run_sentiment_interface
 
 
