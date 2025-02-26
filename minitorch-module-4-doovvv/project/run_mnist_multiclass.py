@@ -68,21 +68,21 @@ class Network(minitorch.Module):
         super().__init__()
 
         # For vis
-        # self.mid = None
-        # self.out = None
+        self.mid = None
+        self.out = None
 
         # TODO: Implement for Task 4.5.
-        self.mid = Conv2d(1,4,3,3)
-        self.out = Conv2d(4,8,3,3)
+        self.conv1 = Conv2d(1,4,3,3)
+        self.conv2 = Conv2d(4,8,3,3)
         self.linear1 = Linear(392,64)
         self.linear2 = Linear(64,10)
         # raise NotImplementedError("Need to implement for Task 4.5")
 
     def forward(self, x):
         # TODO: Implement for Task 4.5.
-        x = self.mid(x).relu()
-        x = self.out(x).relu()
-        x = minitorch.avgpool2d(x,(4,4))
+        self.mid = self.conv1(x).relu()
+        self.out = self.conv2(x).relu()
+        x = minitorch.avgpool2d(self.out,(4,4))
         x = x.view(x.shape[0],392)
         x = self.linear1(x).relu()
         x = minitorch.dropout(x,0.25,not self.training)
