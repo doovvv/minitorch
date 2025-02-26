@@ -155,34 +155,35 @@ class ImageTrain:
                 # Update
                 optim.step()
 
-                if batch_num % 5 == 0:
-                    model.eval()
-                    # Evaluate on 5 held-out batches
+            # if batch_num % 5 == 0:
+            model.eval()
+            # Evaluate on 5 held-out batches
 
-                    correct = 0
-                    for val_example_num in range(0, 1 * BATCH, BATCH):
-                        y = minitorch.tensor(
-                            y_val[val_example_num : val_example_num + BATCH],
-                            backend=BACKEND,
-                        )
-                        x = minitorch.tensor(
-                            X_val[val_example_num : val_example_num + BATCH],
-                            backend=BACKEND,
-                        )
-                        out = model.forward(x.view(BATCH, 1, H, W)).view(BATCH, C)
-                        for i in range(BATCH):
-                            m = -1000
-                            ind = -1
-                            for j in range(C):
-                                if out[i, j] > m:
-                                    ind = j
-                                    m = out[i, j]
-                            if y[i, ind] == 1.0:
-                                correct += 1
-                    log_fn(epoch, total_loss, correct, BATCH, losses, model)
+            correct = 0
+            for val_example_num in range(0, 1 * BATCH, BATCH):
+                y = minitorch.tensor(
+                    y_val[val_example_num : val_example_num + BATCH],
+                    backend=BACKEND,
+                )
+                x = minitorch.tensor(
+                    X_val[val_example_num : val_example_num + BATCH],
+                    backend=BACKEND,
+                )
+                out = model.forward(x.view(BATCH, 1, H, W)).view(BATCH, C)
+                for i in range(BATCH):
+                    m = -1000
+                    ind = -1
+                    for j in range(C):
+                        if out[i, j] > m:
+                            ind = j
+                            m = out[i, j]
+                    if y[i, ind] == 1.0:
+                        correct += 1
+            log_fn(epoch, total_loss, correct, BATCH, losses, model)
 
-                    total_loss = 0.0
-                    model.train()
+            total_loss = 0.0
+            model.train()
+                    # model.train()
 
 
 if __name__ == "__main__":
