@@ -81,7 +81,7 @@ class Network(minitorch.Module):
     def forward(self, x):
         # TODO: Implement for Task 4.5.
         self.mid = self.conv1(x).relu()
-        self.out = self.conv2(x).relu()
+        self.out = self.conv2(self.mid).relu()
         x = minitorch.avgpool2d(self.out,(4,4))
         x = x.view(x.shape[0],392)
         x = self.linear1(x).relu()
