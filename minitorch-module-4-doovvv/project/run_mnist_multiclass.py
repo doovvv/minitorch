@@ -1,10 +1,10 @@
 from mnist import MNIST
 
 import minitorch
-import torchvision.datasets as datasets
+# import torchvision.datasets as datasets
 
-datasets.MNIST(root="project/data/", train=True, download=True)
-datasets.MNIST(root="project/data/", train=False, download=True)
+# datasets.MNIST(root="project/data/", train=True, download=True)
+# datasets.MNIST(root="project/data/", train=False, download=True)
 mndata = MNIST("project/data/MNIST/raw")
 images, labels = mndata.load_training()
 
