@@ -5,7 +5,7 @@ import torchvision.datasets as datasets
 
 datasets.MNIST(root="project/data/", train=True, download=True)
 datasets.MNIST(root="project/data/", train=False, download=True)
-mndata = MNIST("project/data/")
+mndata = MNIST("project/data/MNIST/raw")
 images, labels = mndata.load_training()
 
 BACKEND = minitorch.TensorBackend(minitorch.FastOps)
