@@ -83,7 +83,7 @@ class CNNSentimentKim(minitorch.Module):
         pooled_sum = minitorch.max(x1,2)+minitorch.max(x2,2)+minitorch.max(x3,2)
         pooled_sum = pooled_sum.view(pooled_sum.shape[0],pooled_sum.shape[1])
         out = self.linear(pooled_sum)
-        out = minitorch.dropout(out,rate=self.dropout,ignore=(not self.train))
+        out = minitorch.dropout(out,rate=self.dropout,ignore=(not self.training))
         #这里必须加view，否则计算loss的时候会广播，导致loss变大
         return out.sigmoid().view(out.shape[0])
         # TODO: Implement for Task 4.5.
