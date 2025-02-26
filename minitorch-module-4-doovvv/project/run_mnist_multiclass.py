@@ -68,8 +68,8 @@ class Network(minitorch.Module):
         super().__init__()
 
         # For vis
-        self.mid = None
-        self.out = None
+        # self.mid = None
+        # self.out = None
 
         # TODO: Implement for Task 4.5.
         self.mid = Conv2d(1,4,3,3)
