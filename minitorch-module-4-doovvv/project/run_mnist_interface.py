@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from run_mnist_multiclass import ImageTrain, make_mnist
-
+import numpy as np
 
 def render_run_image_interface():
     st.markdown("### Dataset")
@@ -17,11 +17,15 @@ def render_run_image_interface():
         value=1000,
     )
     (X_train, y_train) = make_mnist(0, n_training_samples)
+    max_value = len(X_train) - 1
+    show = st.number_input("Image", min_value=0, max_value=max_value, step=1, value=1)
 
-    show = st.number_input("Image", min_value=0, max_value=100, step=1, value=1)
-    st.write(
-        px.imshow(X_train[show], title="y =" + str([int(i) for i in y_train[show]]))
-    )
+    # 确保 `X_train[show]` 是二维图像
+    image = X_train[show]
+    # image = np.random.randint(0, 256, (28, 28), dtype=np.uint8)
+    label = np.argmax(np.array(y_train[show]))
+    fig = px.imshow(image, title=f"y = {label}",color_continuous_scale="gray")
+    st.plotly_chart(fig)
 
     st.markdown("### Hyperparameters")
     col1, col2 = st.columns(2)
@@ -46,7 +50,7 @@ def render_run_image_interface():
         start_time = time.time()
         train = ImageTrain()
 
-        def log_fn(epoch, total_loss, correct,batch, losses, model):
+        def log_fn(epoch, total_loss, correct,total, losses, model):
             time_elapsed = time.time() - start_time
             st_progress.progress(epoch / max_epochs)
             time_per_epoch = time_elapsed / (epoch + 1)
@@ -74,7 +78,7 @@ def render_run_image_interface():
             )
             st_epoch_plot.plotly_chart(fig)
             print(
-                f"Epoch: {epoch}/{max_epochs}, loss: {total_loss}, correct: {correct}"
+                f"Epoch: {epoch}/{max_epochs}, loss: {total_loss}, correct_rate: {correct/total}"
             )
 
         train.train(

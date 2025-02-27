@@ -74,16 +74,17 @@ class Network(minitorch.Module):
         # TODO: Implement for Task 4.5.
         self.conv1 = Conv2d(1,4,3,3)
         self.conv2 = Conv2d(4,8,3,3)
-        self.linear1 = Linear(392,64)
-        self.linear2 = Linear(64,10)
+        self.linear1 = Linear(7*7*8,256)
+        self.linear2 = Linear(256,10)
         # raise NotImplementedError("Need to implement for Task 4.5")
 
     def forward(self, x):
         # TODO: Implement for Task 4.5.
         self.mid = self.conv1(x).relu()
+        # x = minitorch.avgpool2d(self.mid,(2,2))
         self.out = self.conv2(self.mid).relu()
         x = minitorch.avgpool2d(self.out,(4,4))
-        x = x.view(x.shape[0],392)
+        x = x.view(x.shape[0],7*7*8)
         x = self.linear1(x).relu()
         x = minitorch.dropout(x,0.25,not self.training)
         x = self.linear2(x)
@@ -122,8 +123,10 @@ class ImageTrain:
         self.model = Network()
         model = self.model
         n_training_samples = len(X_train)
+        n_val_samples = len(X_val)
         optim = minitorch.SGD(self.model.parameters(), learning_rate)
         losses = []
+        correct = 0
         for epoch in range(1, max_epochs + 1):
             total_loss = 0.0
 
@@ -150,7 +153,7 @@ class ImageTrain:
                 loss.view(1).backward()
 
                 total_loss += loss[0]
-                losses.append(total_loss)
+                # losses.append(total_loss)
 
                 # Update
                 optim.step()
@@ -158,9 +161,12 @@ class ImageTrain:
             # if batch_num % 5 == 0:
             model.eval()
             # Evaluate on 5 held-out batches
-
+            losses.append(total_loss)
             correct = 0
-            for val_example_num in range(0, 1 * BATCH, BATCH):
+            total = 0
+            for val_example_num in range(0, n_val_samples, BATCH):
+                if n_val_samples - val_example_num <= BATCH:
+                    continue
                 y = minitorch.tensor(
                     y_val[val_example_num : val_example_num + BATCH],
                     backend=BACKEND,
@@ -171,15 +177,20 @@ class ImageTrain:
                 )
                 out = model.forward(x.view(BATCH, 1, H, W)).view(BATCH, C)
                 for i in range(BATCH):
-                    m = -1000
+                    m = -float("inf")
                     ind = -1
+                    # c= num of classes
                     for j in range(C):
+                        # 得到概率最大的类别ind
                         if out[i, j] > m:
                             ind = j
                             m = out[i, j]
+                    if ind == -1:  # 检查 ind 是否仍然是 -1
+                        print(out.shape)
                     if y[i, ind] == 1.0:
                         correct += 1
-            log_fn(epoch, total_loss, correct, BATCH, losses, model)
+                total += BATCH
+            log_fn(epoch, total_loss, correct, total, losses, model)
 
             total_loss = 0.0
             model.train()
